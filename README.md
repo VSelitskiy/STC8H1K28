@@ -131,7 +131,7 @@ Values above 245 are automatically clamped to 245
 
 ```cpp
 panel.setBrightness(0);    // backlight off
-panel.setBrightness(128);  // 50%
+panel.setBrightness(123);  // 50%
 panel.setBrightness(245);  // maximum
 ```
 
