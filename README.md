@@ -5,12 +5,14 @@ Provides non-blocking display brightness control and buzzer management for hardw
 
 ### Supported boards
 
-| Board                  | Revision | Driver file        |
-|------------------------|----------|--------------------|
-| CrowPanel Advance 4.3  | v1.1     | `STC8H1K28_v12.h`  |
-| CrowPanel Advance 5.0  | v1.2     | `STC8H1K28_v12.h`  |
-| CrowPanel Advance 7.0  | v1.2     | `STC8H1K28_v12.h`  |
-| CrowPanel Advance 7.0  | v1.3     | `STC8H1K28_v13.h`  |
+| Board                      | Size   | Revision | Driver file        |
+|----------------------------|--------|----------|--------------------|
+| CrowPanel Advance ESP32-S3 | 4.3"   | v1.1     | `STC8H1K28_v12.h`  |
+| CrowPanel Advance ESP32-S3 | 5.0"   | v1.1     | `STC8H1K28_v12.h`  |
+| CrowPanel Advance ESP32-S3 | 7.0"   | v1.2     | `STC8H1K28_v12.h`  |
+| CrowPanel Advance ESP32-S3 | 7.0"   | v1.3     | `STC8H1K28_v13.h`  |
+
+> **Note:** Revisions v1.1 (4.3" and 5.0") and v1.2 (7.0") use identical protocol — both are supported by `STC8H1K28_v12.h`.
 
 ---
 
