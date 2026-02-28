@@ -1,70 +1,77 @@
 # STC8H1K28
 
-Arduino-библиотека для управления I2C-экспандером STC8H1K28 на плате **CrowPanel Advance 7**, **CrowPanel Advance 5**, **CrowPanel Advance 4.3**.  
-Поддерживает управление яркостью дисплея и баззером для аппаратных ревизий **v1.1**, **v1.2** и **v1.3**.
+Arduino library for the STC8H1K28 I2C expander found on **CrowPanel Advance** series displays.  
+Provides non-blocking display brightness control and buzzer management for hardware revisions **v1.1**, **v1.2**, and **v1.3**.
+
+### Supported boards
+
+| Board                  | Revision | Driver file        |
+|------------------------|----------|--------------------|
+| CrowPanel Advance 4.3  | v1.1     | `STC8H1K28_v12.h`  |
+| CrowPanel Advance 5.0  | v1.2     | `STC8H1K28_v12.h`  |
+| CrowPanel Advance 7.0  | v1.2     | `STC8H1K28_v12.h`  |
+| CrowPanel Advance 7.0  | v1.3     | `STC8H1K28_v13.h`  |
 
 ---
 
-## Структура библиотеки
+## Library structure
 
 ```
 STC8H1K28/
   src/
-    STC8H1K28_v12.h / .cpp   — драйвер для ревизий 1.1 и 1.2
-    STC8H1K28_v13.h / .cpp   — драйвер для ревизии 1.3
+    STC8H1K28_v12.h / .cpp   — driver for revisions v1.1 and v1.2
+    STC8H1K28_v13.h / .cpp   — driver for revision v1.3
   examples/
-    basic_v12/basic_v12.ino  — пример для ревизий 1.1 и 1.2
-    basic_v13/basic_v13.ino  — пример для ревизии 1.3
-  library.json               — метаданные PlatformIO
-  library.properties         — метаданные Arduino IDE
+    basic_v12/basic_v12.ino  — usage example for v1.1 and v1.2
+    basic_v13/basic_v13.ino  — usage example for v1.3
+  library.json               — PlatformIO metadata
+  library.properties         — Arduino IDE metadata
   README.md
 ```
 
 ---
 
-## Подключение в PlatformIO
+## Installation (PlatformIO)
 
-В `platformio.ini` проекта:
+Add to your `platformio.ini`:
 
 ```ini
 lib_deps =
-    symlink:///абсолютный/путь/до/STC8H1K28
+    https://github.com/VSelitskiy/STC8H1K28.git
 ```
 
-Симлинк позволяет редактировать библиотеку в одном месте — все проекты получают изменения автоматически.
+---
+
+## Hardware differences between revisions
+
+| Parameter   | v1.1 / v1.2               | v1.3               |
+|-------------|---------------------------|--------------------|
+| Brightness  | 6 fixed steps             | Smooth, 0–245      |
+| Buzzer ON   | `0x15`                    | `246`              |
+| Buzzer OFF  | `0x16`                    | `247`              |
 
 ---
 
-## Аппаратные отличия ревизий
+## Wiring (CrowPanel Advance 7.0)
 
-| Параметр              | v1.1 / v1.2                 | v1.3                  |
-|-----------------------|-----------------------------|-----------------------|
-| Яркость               | 6 фиксированных ступеней    | Плавная, 0–245        |
-| Баззер ON             | `0x15`                      | `246`                 |
-| Баззер OFF            | `0x16`                      | `247`                 |
-
----
-
-## Подключение к плате
-
-| Сигнал | GPIO (CrowPanel Advance 7) |
-|--------|---------------------------|
-| SDA    | GPIO 8                    |
-| SCL    | GPIO 9                    |
-| Адрес  | 0x38                      |
+| Signal | GPIO |
+|--------|------|
+| SDA    | 8    |
+| SCL    | 9    |
+| Address| 0x38 |
 
 ---
 
-## Быстрый старт
+## Quick start
 
 ```cpp
 #include <Wire.h>
-#include "STC8H1K28_v12.h"  // или STC8H1K28_v13.h
+#include "STC8H1K28_v12.h"  // or STC8H1K28_v13.h for revision v1.3
 
-STC8H1K28_v12 panel;        // или STC8H1K28_v13
+STC8H1K28_v12 panel;        // or STC8H1K28_v13
 
 void setup() {
-    Wire.begin(8, 9);
+    Wire.begin(8, 9);        // SDA, SCL
     panel.begin();
 }
 ```
@@ -73,65 +80,62 @@ void setup() {
 
 ## API
 
-### Общее для обеих версий
+### Common to both versions
 
 ```cpp
-bool begin();                        // Инициализация (создаёт FreeRTOS таймер)
-void end();                          // Деинициализация
-bool buzzerBeep(uint32_t duration_ms); // Бип duration_ms миллисекунд (non-blocking)
-bool buzzerStop();                   // Принудительно остановить баззер
+bool begin();                          // Initialize (creates FreeRTOS timer)
+void end();                            // Deinitialize and free resources
+bool buzzerBeep(uint32_t duration_ms); // Beep for duration_ms milliseconds (non-blocking)
+bool buzzerStop();                     // Stop buzzer immediately
 ```
 
-> `buzzerBeep()` — non-blocking. Повторный вызов пока баззер играет немедленно
-> останавливает текущий отсчёт и запускает новый.
+> **Note:** `buzzerBeep()` is non-blocking. Calling it while the buzzer is already playing
+> immediately stops the current beep and starts a new one with the new duration.
 
 ---
 
-### Версия v1.1/1.2 — яркость ступенями
+### v1.1 / v1.2 — stepped brightness
 
 ```cpp
-// Через именованную константу
-bool setBrightness(Brightness level);
-
-// Через число 0–5
-bool setBrightness(uint8_t level);
+bool setBrightness(Brightness level);  // set by named constant
+bool setBrightness(uint8_t level);     // set by number 0–5
 ```
 
-| Число | Константа            | Описание       |
-|-------|----------------------|----------------|
-| 0     | `Brightness::OFF`    | Подсветка выкл |
-| 1     | `Brightness::MIN`    | Минимум        |
-| 1     | `Brightness::LEVEL_1`| = MIN          |
-| 2     | `Brightness::LEVEL_2`|                |
-| 3     | `Brightness::LEVEL_3`|                |
-| 4     | `Brightness::LEVEL_4`|                |
-| 5     | `Brightness::MAX`    | Максимум       |
+| Number | Constant             | Description     |
+|--------|----------------------|-----------------|
+| 0      | `Brightness::OFF`    | Backlight off   |
+| 1      | `Brightness::MIN`    | Minimum         |
+| 1      | `Brightness::LEVEL_1`| = MIN           |
+| 2      | `Brightness::LEVEL_2`|                 |
+| 3      | `Brightness::LEVEL_3`|                 |
+| 4      | `Brightness::LEVEL_4`|                 |
+| 5      | `Brightness::MAX`    | Maximum         |
 
 ```cpp
-panel.setBrightness(3);               // по числу
-panel.setBrightness(Brightness::MAX); // по константе
+panel.setBrightness(3);                // by number
+panel.setBrightness(Brightness::MAX);  // by constant
 ```
 
 ---
 
-### Версия v1.3 — яркость плавная
+### v1.3 — smooth brightness
 
 ```cpp
-bool setBrightness(uint8_t brightness); // 0 = выкл, 245 = макс
+bool setBrightness(uint8_t brightness); // 0 = off, 245 = max
 ```
 
-Значения выше 245 автоматически обрезаются до 245  
-(246 и 247 зарезервированы под команды баззера).
+Values above 245 are automatically clamped to 245  
+(246 and 247 are reserved for buzzer commands).
 
 ```cpp
-panel.setBrightness(0);    // выключить подсветку
+panel.setBrightness(0);    // backlight off
 panel.setBrightness(128);  // 50%
-panel.setBrightness(245);  // максимум
+panel.setBrightness(245);  // maximum
 ```
 
 ---
 
-## Зависимости
+## Dependencies
 
 - ESP32 Arduino core
-- FreeRTOS (входит в состав ESP32 Arduino core)
+- FreeRTOS (included with ESP32 Arduino core)
