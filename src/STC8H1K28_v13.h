@@ -6,7 +6,7 @@
 
 class STC8H1K28_v13 {
 public:
-    STC8H1K28_v13(uint8_t i2c_addr = 0x38, TwoWire &wire = Wire);
+    STC8H1K28_v13(uint8_t i2c_addr = 0x30, TwoWire &wire = Wire);
 
     bool begin();
     void end();
@@ -20,6 +20,12 @@ public:
 
     // Принудительно остановить баззер
     bool buzzerStop();
+
+    // Включить питание усилителя спикера (аудио через I2S)
+    bool speakerOn();
+
+    // Выключить питание усилителя спикера
+    bool speakerOff();
 
 private:
     uint8_t       _addr;

@@ -2,6 +2,8 @@
 
 static constexpr uint8_t CMD_BUZZER_ON  = 0x15;
 static constexpr uint8_t CMD_BUZZER_OFF = 0x16;
+static constexpr uint8_t CMD_SPEAKER_ON  = 0x17;
+static constexpr uint8_t CMD_SPEAKER_OFF = 0x18;
 
 constexpr uint8_t STC8H1K28_v12::BRIGHTNESS_TABLE[6];
 
@@ -53,6 +55,14 @@ bool STC8H1K28_v12::buzzerStop() {
     if (!_buzzer_timer) return false;
     xTimerStop(_buzzer_timer, 0);
     return _i2cWrite(CMD_BUZZER_OFF);
+}
+
+bool STC8H1K28_v12::speakerOn() {
+    return _i2cWrite(CMD_SPEAKER_ON);
+}
+
+bool STC8H1K28_v12::speakerOff() {
+    return _i2cWrite(CMD_SPEAKER_OFF);
 }
 
 bool STC8H1K28_v12::_i2cWrite(uint8_t value) {

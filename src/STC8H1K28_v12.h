@@ -9,15 +9,15 @@ enum class Brightness : uint8_t {
     OFF     = 0x05,
     MIN     = 0x06,  // = LEVEL_1
     LEVEL_1 = 0x06,
-    LEVEL_2 = 0x08,
-    LEVEL_3 = 0x0A,
-    LEVEL_4 = 0x0C,
+    LEVEL_2 = 0x07,
+    LEVEL_3 = 0x08,
+    LEVEL_4 = 0x09,
     MAX     = 0x10
 };
 
 class STC8H1K28_v12 {
 public:
-    STC8H1K28_v12(uint8_t i2c_addr = 0x38, TwoWire &wire = Wire);
+    STC8H1K28_v12(uint8_t i2c_addr = 0x30, TwoWire &wire = Wire);
 
     bool begin();
     void end();
@@ -35,13 +35,19 @@ public:
     // Принудительно остановить баззер
     bool buzzerStop();
 
+    // Включить питание усилителя спикера (аудио через I2S)
+    bool speakerOn();
+
+    // Выключить питание усилителя спикера
+    bool speakerOff();
+
 private:
     static constexpr uint8_t BRIGHTNESS_TABLE[6] = {
         0x05,  // 0 — OFF
         0x06,  // 1 — MIN / LEVEL_1
-        0x08,  // 2 — LEVEL_2
-        0x0A,  // 3 — LEVEL_3
-        0x0C,  // 4 — LEVEL_4
+        0x07,  // 2 — LEVEL_2
+        0x08,  // 3 — LEVEL_3
+        0x09,  // 4 — LEVEL_4
         0x10   // 5 — MAX
     };
 

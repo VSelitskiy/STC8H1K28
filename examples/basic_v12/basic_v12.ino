@@ -1,68 +1,82 @@
 /*
-  basic_v12.ino — пример использования STC8H1K28 для CrowPanel Advance 7 (ревизия 1.2)
+  basic_v12.ino — STC8H1K28 usage example for CrowPanel Advance (revision v1.1 / v1.2)
 
-  Подключение:
-    SDA — GPIO 8
-    SCL — GPIO 9
-    I2C адрес — 0x38
+  Supported boards:
+    CrowPanel Advance ESP32-S3 4.3"  (revision v1.1)
+    CrowPanel Advance ESP32-S3 5.0"  (revision v1.1)
+    CrowPanel Advance ESP32-S3 7.0"  (revision v1.2)
 
-  Управление яркостью:
-    6 фиксированных ступеней. Можно задавать числом (0–5) или именованной константой.
+  Wiring:
+    SDA — GPIO 15
+    SCL — GPIO 16
+    I2C address — 0x30
 
-    Число │ Константа          │ Команда
-    ──────┼────────────────────┼────────
-      0   │ Brightness::OFF    │ 0x05
-      1   │ Brightness::MIN    │ 0x06
-      1   │ Brightness::LEVEL_1│ 0x06
-      2   │ Brightness::LEVEL_2│ 0x08
-      3   │ Brightness::LEVEL_3│ 0x0A
-      4   │ Brightness::LEVEL_4│ 0x0C
-      5   │ Brightness::MAX    │ 0x10
+  IMPORTANT:
+    Do NOT call Wire.begin() manually. LovyanGFX initializes Wire(15, 16)
+    internally during gfx.init(). Call panel.begin() only after gfx.init().
 
-  Управление баззером:
-    buzzerBeep(ms)  — включить на ms миллисекунд (non-blocking)
-    buzzerStop()    — принудительно остановить
-    Повторный вызов buzzerBeep() пока баззер играет — перезапускает таймер.
+  Brightness control — 6 fixed steps:
+
+    Number | Constant             | Command | Description
+    -------|----------------------|---------|-------------
+      0    | Brightness::OFF      |  0x05   | Backlight off
+      1    | Brightness::MIN      |  0x06   | Minimum
+      1    | Brightness::LEVEL_1  |  0x06   | = MIN
+      2    | Brightness::LEVEL_2  |  0x07   |
+      3    | Brightness::LEVEL_3  |  0x08   |
+      4    | Brightness::LEVEL_4  |  0x09   |
+      5    | Brightness::MAX      |  0x10   | Maximum
+
+  Buzzer control:
+    buzzerBeep(ms)  — beep for ms milliseconds (non-blocking)
+    buzzerStop()    — stop immediately
+    Calling buzzerBeep() while buzzer is playing restarts the timer.
+
+  Speaker amplifier control (NS4168):
+    speakerOn()   — enable amplifier power
+    speakerOff()  — disable amplifier power
+    Audio stream is managed separately via ESP32-S3 I2S interface.
 */
 
 #include <Wire.h>
 #include "STC8H1K28_v12.h"
 
-STC8H1K28_v12 panel;  // адрес 0x38 по умолчанию
+// LovyanGFX initializes Wire(15, 16) — we use the same Wire instance
+STC8H1K28_v12 panel(0x30, Wire);
+
+// Stub for gfx — replace with your actual LGFX instance
+// LGFX gfx;
 
 void setup() {
     Serial.begin(115200);
-    Wire.begin(8, 9);  // SDA, SCL для CrowPanel Advance 7
 
+    // gfx.init() must be called first — it initializes Wire(15, 16)
+    // gfx.init();
+
+    // Initialize panel after gfx.init()
     if (!panel.begin()) {
-        Serial.println("Ошибка: не удалось инициализировать STC8H1K28");
+        Serial.println("ERROR: STC8H1K28 init failed");
         while (1);
     }
 
-    // Установка яркости через число
-    panel.setBrightness(3);               // LEVEL_3
+    panel.setBrightness(Brightness::MAX);  // maximum brightness
+    panel.buzzerBeep(300);                 // startup beep
+    panel.speakerOn();                     // enable speaker amplifier
 
-    // Установка яркости через константу
-    panel.setBrightness(Brightness::MAX); // Максимум
-
-    // Бип 500 мс при старте
-    panel.buzzerBeep(500);
-
-    Serial.println("Инициализация завершена");
+    Serial.println("Setup done");
 }
 
 void loop() {
-    // Плавное изменение яркости по ступеням (non-blocking логика через millis)
+    // Step through brightness levels every second
     static uint32_t last_ms = 0;
     static uint8_t  step    = 0;
 
     if (millis() - last_ms >= 1000) {
         last_ms = millis();
         panel.setBrightness(step);
-        Serial.printf("Яркость: %d\n", step);
+        Serial.printf("Brightness: %d\n", step);
         step = (step + 1) % 6;
 
-        // Короткий бип на каждом шаге
-        panel.buzzerBeep(50);
+        panel.buzzerBeep(50);  // short beep on each step
     }
 }

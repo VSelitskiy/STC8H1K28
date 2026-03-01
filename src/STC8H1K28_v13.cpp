@@ -1,7 +1,9 @@
 #include "STC8H1K28_v13.h"
 
-static constexpr uint8_t CMD_BUZZER_ON  = 246;
-static constexpr uint8_t CMD_BUZZER_OFF = 247;
+static constexpr uint8_t CMD_BUZZER_ON   = 246;
+static constexpr uint8_t CMD_BUZZER_OFF  = 247;
+static constexpr uint8_t CMD_SPEAKER_ON  = 0x17;
+static constexpr uint8_t CMD_SPEAKER_OFF = 0x18;
 
 STC8H1K28_v13::STC8H1K28_v13(uint8_t i2c_addr, TwoWire &wire)
     : _addr(i2c_addr), _wire(wire), _buzzer_timer(nullptr) {}
@@ -47,6 +49,14 @@ bool STC8H1K28_v13::buzzerStop() {
     if (!_buzzer_timer) return false;
     xTimerStop(_buzzer_timer, 0);
     return _i2cWrite(CMD_BUZZER_OFF);
+}
+
+bool STC8H1K28_v13::speakerOn() {
+    return _i2cWrite(CMD_SPEAKER_ON);
+}
+
+bool STC8H1K28_v13::speakerOff() {
+    return _i2cWrite(CMD_SPEAKER_OFF);
 }
 
 bool STC8H1K28_v13::_i2cWrite(uint8_t value) {

@@ -54,13 +54,13 @@ lib_deps =
 
 ---
 
-## Wiring (CrowPanel Advance 7.0)
+## Wiring
 
-| Signal | GPIO |
-|--------|------|
-| SDA    | 8    |
-| SCL    | 9    |
-| Address| 0x38 |
+| Board                      | Size | SDA     | SCL     | I2C Address |
+|----------------------------|------|---------|---------|-------------|
+| CrowPanel Advance ESP32-S3 | 4.3" | GPIO 15 | GPIO 16 | 0x30        |
+| CrowPanel Advance ESP32-S3 | 5.0" | GPIO 15 | GPIO 16 | 0x30        |
+| CrowPanel Advance ESP32-S3 | 7.0" | GPIO 15 | GPIO 16 | 0x30        |
 
 ---
 
@@ -73,7 +73,7 @@ lib_deps =
 STC8H1K28_v12 panel;        // or STC8H1K28_v13
 
 void setup() {
-    Wire.begin(8, 9);        // SDA, SCL
+    Wire.begin(15, 16);      // SDA, SCL
     panel.begin();
 }
 ```
@@ -89,10 +89,15 @@ bool begin();                          // Initialize (creates FreeRTOS timer)
 void end();                            // Deinitialize and free resources
 bool buzzerBeep(uint32_t duration_ms); // Beep for duration_ms milliseconds (non-blocking)
 bool buzzerStop();                     // Stop buzzer immediately
+bool speakerOn();                      // Enable speaker amplifier power (NS4168)
+bool speakerOff();                     // Disable speaker amplifier power
 ```
 
 > **Note:** `buzzerBeep()` is non-blocking. Calling it while the buzzer is already playing
 > immediately stops the current beep and starts a new one with the new duration.
+
+> **Note:** `speakerOn()` / `speakerOff()` only control power to the NS4168 amplifier.
+> The audio stream itself is managed separately via the ESP32-S3 I2S interface.
 
 ---
 
@@ -103,15 +108,15 @@ bool setBrightness(Brightness level);  // set by named constant
 bool setBrightness(uint8_t level);     // set by number 0–5
 ```
 
-| Number | Constant             | Description     |
-|--------|----------------------|-----------------|
-| 0      | `Brightness::OFF`    | Backlight off   |
-| 1      | `Brightness::MIN`    | Minimum         |
-| 1      | `Brightness::LEVEL_1`| = MIN           |
-| 2      | `Brightness::LEVEL_2`|                 |
-| 3      | `Brightness::LEVEL_3`|                 |
-| 4      | `Brightness::LEVEL_4`|                 |
-| 5      | `Brightness::MAX`    | Maximum         |
+| Number | Constant             | Command | Description     |
+|--------|----------------------|---------|-----------------|
+| 0      | `Brightness::OFF`    | `0x05`  | Backlight off   |
+| 1      | `Brightness::MIN`    | `0x06`  | Minimum         |
+| 1      | `Brightness::LEVEL_1`| `0x06`  | = MIN           |
+| 2      | `Brightness::LEVEL_2`| `0x07`  |                 |
+| 3      | `Brightness::LEVEL_3`| `0x08`  |                 |
+| 4      | `Brightness::LEVEL_4`| `0x09`  |                 |
+| 5      | `Brightness::MAX`    | `0x10`  | Maximum         |
 
 ```cpp
 panel.setBrightness(3);                // by number
@@ -131,7 +136,7 @@ Values above 245 are automatically clamped to 245
 
 ```cpp
 panel.setBrightness(0);    // backlight off
-panel.setBrightness(123);  // 50%
+panel.setBrightness(128);  // 50%
 panel.setBrightness(245);  // maximum
 ```
 
